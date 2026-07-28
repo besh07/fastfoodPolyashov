@@ -1,4 +1,5 @@
-const io = require('socket.io')(3000, {
+const PORT = process.env.PORT || 3000; // Берем порт из окружения Render, или 3000 локально
+const io = require('socket.io')(PORT, {
     cors: { origin: "*" }
 });
 
