@@ -1,22 +1,40 @@
-<div class="screen">
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Табло заказов</title>
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; display: flex; gap: 40px; padding: 20px; }
+        .column { display: flex; flex-direction: column; border: 2px solid #000; padding: 15px; width: 200px; min-height: 300px; }
+        .column h2 { margin-top: 0; text-align: center; border-bottom: 1px solid #ccc; padding-bottom: 10px; }
+        .order-item { font-size: 20px; margin: 5px 0; font-weight: bold; }
+        .ready-item { color: #b02d2d; font-size: 20px; margin: 5px 0; font-weight: bold; }
+    </style>
+</head>
+<body>
     <div class="column">
-        <h2>ГОТОВЯТСЯ</h2>
-        <div id="preparing" class="list"></div>
+        <h2>Заказы</h2>
+        <div id="preparing-list"></div>
     </div>
-    <div class="column ready">
-        <h2>ГОТОВЫ</h2>
-        <div id="ready" class="list"></div>
+    <div class="column">
+        <h2>Готовы</h2>
+        <div id="ready-list"></div>
     </div>
-</div>
 
-<script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
-<script>
-   const socket = io('https://fastfoodpolyashov.onrender.com');
-    socket.on('update', (orders) => {
-        const prepDiv = document.getElementById('preparing');
-        const readyDiv = document.getElementById('ready');
+    <script>
+        const socket = io('https://fastfoodpolyashov.onrender.com');
+        const prepList = document.getElementById('preparing-list');
+        const readyList = document.getElementById('ready-list');
 
-        prepDiv.innerHTML = orders.filter(o => o.status === 'preparing').map(o => <div>${o.id}</div>).join('');
-        readyDiv.innerHTML = orders.filter(o => o.status === 'ready').map(o => <div class="blink">${o.id}</div>).join('');
-    });
-</script>
+        socket.on('update', (orders) => {
+            const preparing = orders.filter(o => o.status === 'preparing');
+            const ready = orders.filter(o => o.status === 'ready');
+
+            prepList.innerHTML = preparing.map(o => `<div class="order-item">${o.id}</div>`).join('');
+            readyList.innerHTML = ready.map(o => `<div class="ready-item">${o.id}</div>`).join('');
+        });
+    </script>
+</body>
+</html>

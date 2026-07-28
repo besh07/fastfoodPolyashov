@@ -1,41 +1,96 @@
-<div id="app">
-    <header>
-        <button v-if="!isAuth" @click="login">Войти</button>
-        <span v-else>Вы в системе</span>
-    </header>
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Меню</title>
+    <!-- Подключаем Vue.js и Socket.io -->
+    <script src="https://cdn.jsdelivr.net/npm/vue@2/dist/vue.js"></script>
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; margin-top: 30px; border: 3px solid #21b821; max-width: 400px; margin: 30px auto; padding: 20px; border-radius: 10px; }
+        .header { margin-bottom: 20px; }
+        .item { display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #ddd; padding: 15px 0; }
+        .item-info { display: flex; align-items: center; gap: 15px; text-align: left; }
+        .item-info img { width: 60px; height: 60px; border-radius: 50%; object-fit: cover; background: #eee; }
+        .controls { display: flex; align-items: center; gap: 10px; }
+        .controls button { width: 30px; height: 30px; border: 1px solid #21b821; background: white; cursor: pointer; font-size: 16px; }
+        .order-btn { background: #21b821; color: white; border: none; padding: 15px 30px; font-size: 18px; border-radius: 5px; margin-top: 20px; cursor: pointer; width: 100%; }
+        .order-btn:disabled { background: #ccc; cursor: not-allowed; }
+        .login-btn { background: none; border: 1px solid #333; padding: 5px 10px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <div class="header">
+            <h1>Терминал</h1>
+            <button class="login-btn" v-if="!isAuth" @click="login">Войти</button>
+            <span v-else>Вы в системе</span>
+        </div>
 
-    <div class="menu">
-        <div v-for="item in products" class="item">
-            <img :src="item.img" style="width:100px; height:100px; background:#eee">
-            <h3>{{ item.name }}</h3>
-            <p>{{ item.price }} руб.</p>
-
-            <div class="controls">
-                <button @click="changeQty(item, -1)">-</button>
-                <span>{{ cart[item.id]  0 }}</span>
-                <button @click="changeQty(item, 1)">+</button>
+        <div class="menu">
+            <div v-for="item in products" class="item">
+                <div class="item-info">
+                    <!-- Вы можете поменять src на свои картинки -->
+                    <img :src="item.img" alt="food">
+                    <div>
+                        <strong>{{ item.name }}</strong><br>
+                        <span style="color: green;">{{ item.price }} ₽</span>
+                    </div>
+                </div>
+                <div class="controls">
+                    <button @click="changeQty(item, -1)">-</button>
+                    <span>{{ cart[item.id] || 0 }}</span>
+                    <button @click="changeQty(item, 1)">+</button>
+                </div>
             </div>
         </div>
+
+        <button class="order-btn" @click="sendOrder" :disabled="!isAuth || totalItems === 0">ОПЛАТИТЬ</button>
     </div>
 
-    <button class="order-btn" @click="sendOrder">ЗАКАЗАТЬ</button>
-</div>
+    <script>
+        const socket = io('https://fastfoodpolyashov.onrender.com');
 
-<script>
-    const socket = io('https://fastfoodpolyashov.onrender.com');
-    // ... внутри JS:
-    function changeQty(item, val) {
-        let current = cart[item.id] 
- 0;
-        let newVal = current + val;
-        if (newVal >= 0 && newVal <= 100) { // Ваше требование на лимит 100 ед
-            cart[item.id] = newVal;
-        }
-    }
-
-    function sendOrder() {
-        if (!isAuth) return alert("Войдите в систему!");
-        const items = products.filter(p => cart[p.id] > 0).map(p => ({name: p.name, qty: cart[p.id]}));
-        socket.emit('new_order', items);
-    }
-</script>
+        new Vue({
+            el: '#app',
+            data: {
+                isAuth: false,
+                cart: {},
+                // ЗДЕСЬ ВЫ БУДЕТЕ МЕНЯТЬ ФОТО. Положите картинки в папку menu-app/images/
+                products: [
+                    { id: 1, name: "Бургер", price: 500, img: "https://via.placeholder.com/100x100?text=Burger" },
+                    { id: 2, name: "Ролл", price: 250, img: "https://via.placeholder.com/100x100?text=Roll" },
+                    { id: 3, name: "Картофель", price: 150, img: "https://via.placeholder.com/100x100?text=Fries" }
+                ]
+            },
+            computed: {
+                totalItems() {
+                    let sum = 0;
+                    for (let key in this.cart) sum += this.cart[key];
+                    return sum;
+                }
+            },
+            methods: {
+                login() { this.isAuth = true; },
+                changeQty(item, val) {
+                    let current = this.cart[item.id] || 0;
+                    let newVal = current + val;
+                    if (newVal >= 0 && newVal <= 100) {
+                        this.$set(this.cart, item.id, newVal);
+                    }
+                },
+                sendOrder() {
+                    if (!this.isAuth) return alert("Войдите в систему!");
+                    const items = this.products
+                        .filter(p => this.cart[p.id] > 0)
+                        .map(p => ({ name: p.name, qty: this.cart[p.id] }));
+                    socket.emit('new_order', items);
+                    this.cart = {};
+                    alert("Заказ отправлен на кухню!");
+                }
+            }
+        });
+    </script>
+</body>
+</html>

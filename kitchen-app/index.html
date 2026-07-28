@@ -1,18 +1,53 @@
-<div id="kitchen-orders"></div>
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Кухня</title>
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .order-card { border: 2px solid #2b3bce; padding: 15px; margin-bottom: 15px; max-width: 300px; border-radius: 5px; background: #f8f9ff; }
+        .order-card h3 { margin: 0 0 10px 0; }
+        .order-card ul { margin: 0 0 10px 0; padding-left: 20px; }
+        .actions { display: flex; gap: 10px; }
+        button { cursor: pointer; padding: 5px 10px; }
+        .btn-ready { background: #fff; border: 1px solid #b02d2d; color: #b02d2d; }
+        .btn-delete { background: #b02d2d; color: white; border: none; }
+    </style>
+</head>
+<body>
+    <h2>Обработка заказов</h2>
+    <div id="orders-container"></div>
 
-<script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
-<script>
-    const socket = io('https://fastfoodpolyashov.onrender.com');
-    socket.on('update', (orders) => {
-        document.getElementById('kitchen-orders').innerHTML = orders.map(o => 
-            <div class="order-card">
-                <h3>Заказ ${o.id}</h3>
-                <ul>${o.items.map(i => <li>${i.name} x${i.qty}</li>).join('')}</ul>
-                ${o.status === 'preparing' 
-                    ? <button onclick="socket.emit('mark_ready','${o.id}')">ГОТОВ</button>
-                    : <button onclick="socket.emit('remove_order','${o.id}')">ВЫДАН</button>
-                }
-            </div>
-        ).join('');
-    });
-</script>
+    <script>
+        const socket = io('https://fastfoodpolyashov.onrender.com');
+        const container = document.getElementById('orders-container');
+
+        socket.on('update', (orders) => {
+            // Сортировка: берем числовую часть ID, сравниваем по возрастанию
+            const sortedOrders = [...orders].sort((a, b) => {
+                const numA = parseInt(a.id.replace(/[^0-9]/g, ''), 10);
+                const numB = parseInt(b.id.replace(/[^0-9]/g, ''), 10);
+                return numA - numB;
+            });
+
+            container.innerHTML = sortedOrders.map(o => `
+                <div class="order-card">
+                    <h3>Заказ #${o.id}</h3>
+                    <ul>
+                        ${o.items.map(item => `<li>${item.name} x${item.qty}</li>`).join('')}
+                    </ul>
+                    <div class="actions">
+                        ${o.status === 'preparing' 
+                            ? `<button class="btn-ready" onclick="socket.emit('mark_ready', '${o.id}')">ГОТОВ</button>` 
+                            : `<span style="color:green; font-weight:bold;">✔ Готов</span>`
+                        }
+                        <button class="btn-delete" onclick="socket.emit('remove_order', '${o.id}')">Удалить</button>
+                    </div>
+                </div>
+            `).join('');
+        });
+    </script>
+</body>
+</html>
