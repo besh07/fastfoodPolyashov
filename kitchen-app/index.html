@@ -1,0 +1,18 @@
+<div id="kitchen-orders"></div>
+
+<script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+<script>
+    const socket = io('http://ВАШ_АЙПИ:3000');
+    socket.on('update', (orders) => {
+        document.getElementById('kitchen-orders').innerHTML = orders.map(o => 
+            <div class="order-card">
+                <h3>Заказ ${o.id}</h3>
+                <ul>${o.items.map(i => <li>${i.name} x${i.qty}</li>).join('')}</ul>
+                ${o.status === 'preparing' 
+                    ? <button onclick="socket.emit('mark_ready','${o.id}')">ГОТОВ</button>
+                    : <button onclick="socket.emit('remove_order','${o.id}')">ВЫДАН</button>
+                }
+            </div>
+        ).join('');
+    });
+</script>

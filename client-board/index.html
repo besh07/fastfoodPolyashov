@@ -1,0 +1,22 @@
+<div class="screen">
+    <div class="column">
+        <h2>ГОТОВЯТСЯ</h2>
+        <div id="preparing" class="list"></div>
+    </div>
+    <div class="column ready">
+        <h2>ГОТОВЫ</h2>
+        <div id="ready" class="list"></div>
+    </div>
+</div>
+
+<script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+<script>
+    const socket = io('http://ВАШ_АЙПИ:3000');
+    socket.on('update', (orders) => {
+        const prepDiv = document.getElementById('preparing');
+        const readyDiv = document.getElementById('ready');
+
+        prepDiv.innerHTML = orders.filter(o => o.status === 'preparing').map(o => <div>${o.id}</div>).join('');
+        readyDiv.innerHTML = orders.filter(o => o.status === 'ready').map(o => <div class="blink">${o.id}</div>).join('');
+    });
+</script>

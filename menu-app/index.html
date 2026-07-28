@@ -1,0 +1,40 @@
+<div id="app">
+    <header>
+        <button v-if="!isAuth" @click="login">Войти</button>
+        <span v-else>Вы в системе</span>
+    </header>
+
+    <div class="menu">
+        <div v-for="item in products" class="item">
+            <img :src="item.img" style="width:100px; height:100px; background:#eee">
+            <h3>{{ item.name }}</h3>
+            <p>{{ item.price }} руб.</p>
+
+            <div class="controls">
+                <button @click="changeQty(item, -1)">-</button>
+                <span>{{ cart[item.id]  0 }}</span>
+                <button @click="changeQty(item, 1)">+</button>
+            </div>
+        </div>
+    </div>
+
+    <button class="order-btn" @click="sendOrder">ЗАКАЗАТЬ</button>
+</div>
+
+<script>
+    // ... внутри JS:
+    function changeQty(item, val) {
+        let current = cart[item.id] 
+ 0;
+        let newVal = current + val;
+        if (newVal >= 0 && newVal <= 100) { // Ваше требование на лимит 100 ед
+            cart[item.id] = newVal;
+        }
+    }
+
+    function sendOrder() {
+        if (!isAuth) return alert("Войдите в систему!");
+        const items = products.filter(p => cart[p.id] > 0).map(p => ({name: p.name, qty: cart[p.id]}));
+        socket.emit('new_order', items);
+    }
+</script>
